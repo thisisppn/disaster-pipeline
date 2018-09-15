@@ -4,9 +4,16 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    This function loads the data from the CSV files and setups up the categories column as required.
+    :param messages_filepath: path to the messages CSV file
+    :param categories_filepath: path to the categories CSV file
+    :return: dataframe
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
-    
+
+    # Merge the two dataframes on the common column 'id'
     df = messages.merge(categories, on='id', how='inner')
     categories = categories.categories.str.split(';', expand=True)
     row = categories.iloc[0]
@@ -29,14 +36,27 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """
+    Remove the duplicate columns from the data
+    :param df: The dataframe object to be cleaned
+    :return: Cleaned dataframe object
+    """
     # drop duplicates
     df = df[~df.duplicated()]
     return df
 
 
 def save_data(df, database_filename):
-	engine = create_engine('sqlite:///'+database_filename)
-	df.to_sql('dataset', engine, if_exists='replace', index=False, chunksize=999)
+    """
+    Save the dataframe into a SQLite database.
+    :param df: dataframe object to be saved in the db
+    :param database_filename: path to the destination database file
+    :return:
+    """
+    engine = create_engine('sqlite:///'+database_filename)
+
+    # We need the chunksize=999 because that's the default limit, and it gives errors without it in my local system.
+    df.to_sql('dataset', engine, if_exists='replace', index=False, chunksize=999)
 
 
 def main():
