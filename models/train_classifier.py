@@ -29,9 +29,14 @@ def load_data(database_filepath):
     """
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql_table('dataset', con=engine)
+
+    df = df.dropna() # There are some Null values, so, we remove them.
+
     X = df.loc[:, 'message']
-    Y = df.loc[:, 'genre']
-    return X, Y, Y.unique()
+    Y = df.iloc[:, 4:]
+    categories = list(Y)
+
+    return X.values, Y.values, categories
 
 
 def tokenize(text):
@@ -73,7 +78,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
     :return:
     """
     Y_pred = model.predict(X_test)
-    print(classification_report(Y_test, Y_pred, labels=category_names))
+    print(classification_report(Y_test, Y_pred, target_names=category_names))
 
 
 def save_model(model, model_filepath):
@@ -90,9 +95,9 @@ def get_best_params(model, X_train, Y_train):
     # print(pipeline.get_params().keys()) # Use this to find out which keys to add in the parameter
 
     parameters = {
-        'classifier__estimator__n_estimators': [100, 150],
+        'classifier__estimator__n_estimators': [50, 100, 150],
         'classifier__estimator__max_features': ['sqrt',],
-        'classifier__estimator__criterion': ['gini', 'entropy']
+        'classifier__estimator__criterion': ['entropy', 'gini']
     }
 
     cv = GridSearchCV(model, param_grid = parameters)
@@ -106,19 +111,24 @@ def main():
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
+
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        Y_train = np.reshape(Y_train.values, (Y_train.shape[0], 1))
-        Y_test = np.reshape(Y_test.values, (Y_test.shape[0], 1))
 
         print("Finding best parameters...")
         model = build_model()
         best_params = get_best_params(model, X_train, Y_train)
-
+        #
         rf_params = {
             'n_estimators': best_params['classifier__estimator__n_estimators'],
             'max_features': best_params['classifier__estimator__max_features'],
             'criterion': best_params['classifier__estimator__criterion'],
         }
+
+        # rf_params = {
+        #     'n_estimators': 50,
+        #     'max_features': 'sqrt',
+        #     'criterion': 'entropy',
+        # }
 
         print("Best parameters are... ")
         print(rf_params)

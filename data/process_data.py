@@ -20,11 +20,14 @@ def load_data(messages_filepath, categories_filepath):
     category_colnames = [cat_name[:-2] for cat_name in row]
     categories.columns = category_colnames
     
-    
     for column in categories:
 
         # set each value to be the last character of the string
-        categories[column] = categories[column].str[-1]
+        # categories[column] = categories[column].str[-1]
+
+        # After looking at the dataset, we see that one of the columns have three values 0, 1 and 2.
+        # So, we need to remove the value 2, so that we only have 0 and 1
+        categories[column] = categories[column].apply(lambda x: x[-1] if int(x[-1]) < 2 else 1)
 
         # convert column from string to numeric
         categories[column] = categories[column].astype('int')
