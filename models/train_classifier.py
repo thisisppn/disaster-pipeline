@@ -13,7 +13,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 
 import pickle
 
@@ -80,6 +80,12 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Y_pred = model.predict(X_test)
     print(classification_report(Y_test, Y_pred, target_names=category_names))
 
+    # Since there are 36 categories, we'll just loop over them to calculate the accuracy of each category.
+    print("*"*30)
+    print("Accuracy scores for each category")
+    print("*" * 30)
+    for i in range(36):
+        print("Category {}: Accuracy Score - {}".format(category_names[i], accuracy_score(Y_test[:, i], Y_pred[:, i])))
 
 def save_model(model, model_filepath):
     """
@@ -117,7 +123,7 @@ def main():
         print("Finding best parameters...")
         model = build_model()
         best_params = get_best_params(model, X_train, Y_train)
-        #
+
         rf_params = {
             'n_estimators': best_params['classifier__estimator__n_estimators'],
             'max_features': best_params['classifier__estimator__max_features'],
